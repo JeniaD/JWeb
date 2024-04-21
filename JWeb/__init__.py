@@ -1,1 +1,1 @@
-from .main import App
+from .jweb import JWebApp
