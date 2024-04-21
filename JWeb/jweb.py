@@ -1,10 +1,12 @@
 import socket
 import signal
 import sys
+import os
 from .response import Response
 
 class Config:
     showPoweredBy = True
+    codeDir = "src"
 
 class JWebApp:
     def __init__(self, host="127.0.0.1", port=8080, config=""):
@@ -18,6 +20,41 @@ class JWebApp:
         self.serverSocket = None
 
         self.frameworkName = "JWeb"
+
+        self.LoadFiles()
+
+    def LoadFiles(self, path=""):
+        for item in os.listdir(os.path.join(self.config.codeDir, path)):
+            fullPath = os.path.join(self.config.codeDir, path, item)
+
+            if os.path.isdir(fullPath):
+                self.LoadFiles(os.path.join(path, item))
+            elif os.path.isfile(fullPath):
+                with open(fullPath, 'r') as file:
+                    content = file.read()
+                
+                print("Setting up an endpoint", os.path.join(path, item))
+
+                def func(): return Response(200, content, contentType="text/html; charset=utf-8")
+
+                # WARNING: saving functions from local LoadFiles might not be
+                # a good idea. Also, adding '/' + ... could be a mistake
+
+                self.routes['/' + os.path.join(path, item)] = func
+                if item == "index.jweb":
+                    self.routes['/' + path] = func
+                
+                # print(self.routes)
+
+                # @self.route(os.path.join(path, item))
+                # def loader():
+                #     return Response(200, content, contentType="text/html; charset=utf-8")
+                
+                # if item == "index.jweb":
+                #     @self.route(path)
+                #     def loader():
+                #         return Response(200, content, contentType="text/html; charset=utf-8")
+
         
     def route(self, path):
         def decorator(func):
@@ -44,8 +81,11 @@ class JWebApp:
         serverSocket.listen(5)
 
         print(f"Listening on {self.host}:{self.port}")
+        print("Loaded routes:")
+        for route in self.routes:
+            print(f" \"{route}\" =>", self.routes[route])
+        print()
 
-        clientSocket = None
         while True:
             clientSocket, clientAddress = serverSocket.accept()
             requestData = clientSocket.recv(1024).decode()
@@ -62,6 +102,7 @@ class JWebApp:
                 if isinstance(response, str):
                     response = Response(200, response)
                 
+                response = self._middleware(response)
                 print(f"{method} {path} - {response.status}")
                 clientSocket.sendall(response.Raw())
 

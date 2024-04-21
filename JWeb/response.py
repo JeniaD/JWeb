@@ -16,7 +16,7 @@ class Response:
             self.statusName = "Unknown"
     
     def AddHeaders(self, headers):
-        self.headers += headers
+        self.headers.update(headers)
     
     def Raw(self):
         lines = [
