@@ -2,6 +2,7 @@ import socket
 import signal
 import sys
 import os
+import re
 from .response import Response
 # from .engine import execute
 
@@ -25,22 +26,25 @@ class JWebApp:
         self.LoadFiles()
     
     def _interpret(self, line):
-        return line
+        # parts = [i for i in line.split(' ') if i.replace]
+        return eval(line) # line
     
-    def _exec(self, code):
-        script = False
-        result = ""
-        if "<?jweb" in code:
-            for line in code:
-                # if "<?jweb" in line:
-                #     line = line.split("<?jweb", 1)
-                #     result += line[0]
-                #     line = line[1]
+    def _exec(self, jwebCode):
+        lines = jwebCode.split('\n')
+        output = ""
+        for line in lines:
+            res = self._interpret(line)
+            if res: output += res
+        return output
 
-                #     result += '\n'
-                # else:
-                    result += line + '\n'
-        return result
+    def _run(self, code):
+        pattern = r"<\?jweb(.*?)\?>"
+        if "<?jweb" in code:
+            scripts = re.findall(pattern, code)
+            for script in scripts:
+                res = self._exec(script)
+                code.replace(f"<?jweb {script} ?>", res if res else '', 1)
+        return code
 
     def LoadFiles(self, path=""):
         for item in os.listdir(os.path.join(self.config.codeDir, path)):
@@ -54,7 +58,7 @@ class JWebApp:
                 
                 print("Setting up an endpoint", os.path.join(path, item))
 
-                def func(): return Response(200, self._exec(content), contentType="text/html; charset=utf-8")
+                def func(): return Response(200, self._run(content), contentType="text/html; charset=utf-8")
 
                 # WARNING: saving functions from local LoadFiles might not be
                 # a good idea. Also, adding '/' + ... could be a mistake
