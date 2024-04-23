@@ -3,6 +3,7 @@ import signal
 import sys
 import os
 from .response import Response
+# from .engine import execute
 
 class Config:
     showPoweredBy = True
@@ -22,6 +23,24 @@ class JWebApp:
         self.frameworkName = "JWeb"
 
         self.LoadFiles()
+    
+    def _interpret(self, line):
+        return line
+    
+    def _exec(self, code):
+        script = False
+        result = ""
+        if "<?jweb" in code:
+            for line in code:
+                # if "<?jweb" in line:
+                #     line = line.split("<?jweb", 1)
+                #     result += line[0]
+                #     line = line[1]
+
+                #     result += '\n'
+                # else:
+                    result += line + '\n'
+        return result
 
     def LoadFiles(self, path=""):
         for item in os.listdir(os.path.join(self.config.codeDir, path)):
@@ -35,7 +54,7 @@ class JWebApp:
                 
                 print("Setting up an endpoint", os.path.join(path, item))
 
-                def func(): return Response(200, content, contentType="text/html; charset=utf-8")
+                def func(): return Response(200, self._exec(content), contentType="text/html; charset=utf-8")
 
                 # WARNING: saving functions from local LoadFiles might not be
                 # a good idea. Also, adding '/' + ... could be a mistake
