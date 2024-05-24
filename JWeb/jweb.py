@@ -4,7 +4,6 @@ import sys
 import os
 import re
 from .response import Response
-# from .engine import execute
 
 class Config:
     showPoweredBy = True
@@ -26,8 +25,7 @@ class JWebApp:
         self.LoadFiles()
     
     def _interpret(self, line):
-        # parts = [i for i in line.split(' ') if i.replace]
-        return eval(line) # line
+        return eval(line)
     
     def _exec(self, jwebCode):
         lines = jwebCode.split('\n')
@@ -67,17 +65,6 @@ class JWebApp:
                 if item == "index.jweb":
                     self.routes['/' + path] = func
                 
-                # print(self.routes)
-
-                # @self.route(os.path.join(path, item))
-                # def loader():
-                #     return Response(200, content, contentType="text/html; charset=utf-8")
-                
-                # if item == "index.jweb":
-                #     @self.route(path)
-                #     def loader():
-                #         return Response(200, content, contentType="text/html; charset=utf-8")
-
         
     def route(self, path):
         def decorator(func):
